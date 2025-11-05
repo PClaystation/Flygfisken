@@ -1,5 +1,5 @@
 import pygame
-import time
+import random
 
 # --- Setup ---
 pygame.init()
@@ -27,10 +27,15 @@ character = pygame.transform.scale(character_img, (100, 100))
 
 # --- Game Loop ---
 running = True
-y = 100  # start position
+GROUND_Y = 10
+
+y = GROUND_Y
 velocity = 0
-gravity = 2
+gravity = 1.5
 score = 0
+
+obstacles = []
+spawn_timer = 0
 
 
 
@@ -41,7 +46,8 @@ while running:
             running = False
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
-                velocity = -33  # jump impulse (negative = up)
+                if y == 300:
+                    velocity = -30  # jump impulse (negative = up)
 
 
 
@@ -54,6 +60,20 @@ while running:
         y = 300
         velocity = 0
 
+        # spawn new obstacles
+    spawn_timer += 1
+    if spawn_timer > 90:  # every ~1.5s at 60fps
+        spawn_timer = 0
+        height = random.randint(40, 100)
+        obstacle_y = 400 - height  # spawn ON the ground
+        obstacles.append(pygame.Rect(WIDTH, obstacle_y, 30, height))
+
+    # move obstacles
+    for rect in obstacles:
+        rect.x -= 8
+    # remove ones that are off-screen
+    obstacles = [r for r in obstacles if r.x > -50]
+
     # score
     score += 1
 
@@ -65,6 +85,8 @@ while running:
     pygame.draw.rect(screen, WHITE, (20, 30, 200, 50))
     screen.blit(font.render("Score:", True, BLACK), (30, 40))
     screen.blit(font.render(f"{score}", True, BLACK), (120, 41))
+    for rect in obstacles:
+        pygame.draw.rect(screen, WHITE, rect)
 
 
 
