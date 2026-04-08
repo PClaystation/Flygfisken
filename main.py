@@ -17,13 +17,18 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 BLUE = (0, 0, 255)
 SKY_BLUE = (135, 206, 235)
+GRAY = (125, 125, 125)
 
 # Clock
 clock = pygame.time.Clock()
 
 # Character
-character_img = pygame.image.load("Assets/Flygfisk_placeholder.png").convert()
+character_img = pygame.image.load("Assets/Flygfisk_placeholder.png").convert_alpha()
 character = pygame.transform.scale(character_img, (100, 100))
+
+# Use the *scaled* image for rect (important!)
+player_rect = character.get_rect()
+player_rect.topleft = (100, 300)  # initial position matches your ground logic
 
 # --- Game Loop ---
 running = True
@@ -47,7 +52,7 @@ while running:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 if y == 300:
-                    velocity = -30  # jump impulse (negative = up)
+                    velocity = -25  # jump impulse (negative = up)
 
 
 
@@ -61,7 +66,11 @@ while running:
         velocity = 0
 
         # spawn new obstacles
-    spawn_timer += 1
+    if score < 1000:
+        spawn_timer += 1
+    if score > 1000:
+        spawn = random.uniform(1, 2)
+        spawn_timer += spawn
     if spawn_timer > 90:  # every ~1.5s at 60fps
         spawn_timer = 0
         height = random.randint(40, 100)
@@ -74,6 +83,16 @@ while running:
     # remove ones that are off-screen
     obstacles = [r for r in obstacles if r.x > -50]
 
+    # update player_rect position
+    player_rect.topleft = (100, y)
+
+    # check collision with each obstacle
+    for rect in obstacles:
+        if player_rect.colliderect(rect):
+            print("Collision!")
+            running = False
+            score = 0
+
     # score
     score += 1
 
@@ -81,12 +100,12 @@ while running:
     screen.fill(BLACK)
     pygame.draw.rect(screen, SKY_BLUE, (0, 0, WIDTH, HEIGHT//1.5))      # sky
     pygame.draw.rect(screen, BLUE, (0, HEIGHT // 1.5, WIDTH, HEIGHT // 2)) # water
-    screen.blit(character, (100, y))
+    screen.blit(character, player_rect)
     pygame.draw.rect(screen, WHITE, (20, 30, 200, 50))
     screen.blit(font.render("Score:", True, BLACK), (30, 40))
     screen.blit(font.render(f"{score}", True, BLACK), (120, 41))
     for rect in obstacles:
-        pygame.draw.rect(screen, WHITE, rect)
+        pygame.draw.rect(screen, GRAY, rect)
 
 
 
